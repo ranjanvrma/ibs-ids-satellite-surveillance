@@ -1,5 +1,10 @@
-numpy
+streamlit
+pandas
+ultralytics
+lapx
 opencv-python
-matplotlib
-scikit-learn
-jupyter
+numpy
+scikit-image
+imageio[ffmpeg]
+Pillow
+fpdf
