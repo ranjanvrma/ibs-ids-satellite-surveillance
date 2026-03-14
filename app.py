@@ -8,9 +8,9 @@ from datetime import datetime
 import pandas as pd
 from ultralytics import YOLO
 
-from src.tracking.loitering import LoiteringEngine
-from src.satellite.change_detection import SatelliteChangeDetector
-from src.strategic.risk_scoring import RiskFusionEngine
+from src.loitering import LoiteringEngine
+from src.change_detection import SatelliteChangeDetector
+from src.risk_scoring import RiskFusionEngine
 
 # --- 1. Page Configuration ---
 st.set_page_config(page_title="IBS Command Center", layout="wide")
