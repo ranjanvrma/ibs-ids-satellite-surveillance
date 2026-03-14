@@ -1,0 +1,10 @@
+streamlit
+pandas
+ultralytics
+lapx
+opencv-python
+numpy
+scikit-image
+imageio[ffmpeg]
+Pillow
+fpdf
