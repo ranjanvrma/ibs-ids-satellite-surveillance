@@ -26,23 +26,26 @@ def root():
 
 
 @app.post("/analyze-satellite")
-async def analyze_satellite(
-    before: UploadFile = File(...),
-    after: UploadFile = File(...)
-):
+async def analyze_satellite(filename: str):
 
-    before_path = os.path.join(UPLOAD_DIR, "before_" + before.filename)
-    after_path = os.path.join(UPLOAD_DIR, "after_" + after.filename)
+    im1_path = f"../data/satellite/im1/{filename}"
+    im2_path = f"../data/satellite/im2/{filename}"
 
-    with open(before_path, "wb") as buffer:
-        shutil.copyfileobj(before.file, buffer)
-
-    with open(after_path, "wb") as buffer:
-        shutil.copyfileobj(after.file, buffer)
-
-    score, changes = sat_detector.analyze(before_path, after_path)
+    score, changes = sat_detector.analyze(im1_path, im2_path)
 
     return {
         "similarity_score": score,
         "changes_detected": changes
     }
+
+@app.get("/satellite-maps")
+def get_maps():
+
+    folder = "../data/satellite/im1"
+
+    files = [
+        f for f in os.listdir(folder)
+        if f.endswith(".png")
+    ]
+
+    return {"maps": files}
