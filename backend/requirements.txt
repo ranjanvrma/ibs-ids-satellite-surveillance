@@ -1,10 +1,11 @@
-streamlit
-pandas
-ultralytics
-lapx
+fastapi
+uvicorn
+python-multipart
 opencv-python
 numpy
+ultralytics
 scikit-image
 imageio[ffmpeg]
-Pillow
-fpdf
+pillow
+pandas
+lapx
