@@ -81,3 +81,8 @@ frontend/dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Sample videos
+*.mp4
+*.avi
+*.mov
