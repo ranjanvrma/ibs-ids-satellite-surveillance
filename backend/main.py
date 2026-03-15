@@ -82,6 +82,7 @@ async def analyze_video(file: UploadFile = File(...)):
     fps    = int(cap.get(cv2.CAP_PROP_FPS)) or 30
 
     loiter_engine = LoiteringEngine(dist_thresh=50, time_thresh=10)
+    loiter_engine.set_fps(fps)
     loiter_engine.set_intrusion_zone(width, height)
 
     out_path = "outputs/processed_tactical.mp4"
@@ -121,7 +122,7 @@ async def analyze_video(file: UploadFile = File(...)):
 
             if results and results[0].boxes is not None and len(results[0].boxes) > 0:
                 boxes = results[0].boxes
-                loitering_data, class_counts = loiter_engine.update(boxes)
+                loitering_data, class_counts = loiter_engine.update(boxes, frame_idx)
                 annotated = results[0].plot()
 
             # Draw intrusion zone
@@ -160,6 +161,8 @@ async def analyze_video(file: UploadFile = File(...)):
     writer.close()
     os.unlink(tmp_path)
 
+    zone_log = loiter_engine.get_zone_log()
+
     return {
         "risk_level":    final_level,
         "risk_score":    max_risk_score,
@@ -168,4 +171,5 @@ async def analyze_video(file: UploadFile = File(...)):
         "incident_count": len(incident_log),
         "total_frames":  total_frames,
         "video_url":     "/outputs/processed_tactical.mp4",
+        "zone_log":      zone_log,
     }

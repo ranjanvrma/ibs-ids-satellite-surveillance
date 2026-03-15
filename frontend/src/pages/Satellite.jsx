@@ -42,7 +42,7 @@ export default function SatellitePage() {
   const changes  = result?.changes_detected ?? 0
 
   return (
-    <div style={{ maxWidth: 960, animation: 'fadeUp 0.3s ease both' }}>
+    <div style={{ maxWidth: 1200, animation: 'fadeUp 0.3s ease both' }}>
 
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
@@ -194,7 +194,7 @@ export default function SatellitePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeUp 0.35s ease both' }}>
 
           {/* Score cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
             <StatCard label="Match Score" accent={parseFloat(matchPct) >= 85 ? '#4ade80' : '#f87171'}>
               <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1, color: scoreGood ? '#4ade80' : '#f87171' }}>
                 {matchPct}<span style={{ fontSize: 20, opacity: 0.6 }}>%</span>
