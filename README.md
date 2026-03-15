@@ -62,6 +62,13 @@ FastAPI Backend (:8000)
 Tracks per-ID movement distance and time inside a defined restricted zone.
 Flags subjects that remain stationary within the red zone beyond the time threshold.
 
+**Zone Intrusion Log** — records every object that enters the restricted zone with:
+- ByteTrack ID, object type (Person/Car/etc.)
+- Frame-accurate entry timestamp (MM:SS into video)
+- Duration spent in zone
+- Status: IN ZONE or EXITED
+- Threat tag: LOITERING (>10s) or INTRUDER
+
 ### 4. Risk Fusion Engine
 `backend/src/risk_scoring.py`
 
@@ -210,6 +217,22 @@ data/satellite/
 - Uses offline datasets — no live satellite feed integration
 - Video input is file-based — no live RTSP/camera stream support
 - Satellite and video layers are not spatially correlated with GPS coordinates
+
+---
+
+## 📋 Changelog
+
+### v1.2.0
+- Zone intrusion log with frame-accurate entry timestamps and duration
+- Full-width dashboard layout
+- Video processing performance improvements (frame skipping)
+
+### v1.1.0
+- Video analytics pipeline fixed and working
+- Frame skip optimization for faster CPU processing
+
+### v1.0.0
+- Initial release — React + FastAPI migration from Streamlit
 
 ---
 
