@@ -1,3 +1,83 @@
-data/
+# Python
 __pycache__/
-.ipynb_checkpoints/
+*.pyc
+.venv/
+venv/
+
+# Model weights — too large for git
+*.pt
+*.pth
+models/
+
+# Data — satellite images can be hundreds of MB
+data/
+
+# Outputs — generated at runtime
+backend/outputs/
+backend/temp_uploads/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+```
+
+---
+
+**README.md structure** I'd recommend:
+```
+# IBS-IDS — Intelligent Border Surveillance
+
+> AI-powered surveillance combining satellite change detection 
+> with real-time tactical video analytics.
+
+## Demo
+[screenshots or GIF here]
+
+## Features
+- Satellite change detection (ORB + SSIM + Edge refinement)
+- Video analytics (YOLOv8n + ByteTrack)
+- Risk fusion engine
+- Real-time command dashboard
+
+## Tech Stack
+Backend: FastAPI · OpenCV · YOLOv8n · ByteTrack · scikit-image
+Frontend: React · Vite · Tailwind CSS
+
+## Setup
+### Backend
+### Frontend
+
+## Project Structure
+[link to docs/architecture.md]
+
+## v1.0 — March 2026
+
+# Temp uploads — runtime generated, never commit
+backend/temp_uploads/
+
+# Processed outputs — runtime generated
+backend/outputs/
+outputs/
+
+# Python cache
+backend/__pycache__/
+backend/src/__pycache__/
+
+# Model weights
+models/yolov8n.pt
+*.pt
+
+# Virtual environment
+venv/
+
+# Frontend dependencies and build
+frontend/node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
