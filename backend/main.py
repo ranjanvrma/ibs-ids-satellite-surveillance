@@ -24,7 +24,7 @@ os.makedirs("outputs", exist_ok=True)
 app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 app.mount("/data",    StaticFiles(directory="../data"),  name="data")
 
-sat_detector = SatelliteChangeDetector()
+sat_detector  = SatelliteChangeDetector()
 fusion_engine = RiskFusionEngine()
 
 os.makedirs("temp_uploads", exist_ok=True)
@@ -57,7 +57,7 @@ async def analyze_satellite(filename: str):
     score, changes = sat_detector.analyze(im1_path, im2_path)
     fusion_engine.update_satellite_data(score, changes)
 
-    diff_url = None
+    diff_url  = None
     diff_path = f"outputs/change_maps/diff_{filename}"
     if changes > 0 and os.path.exists(diff_path):
         diff_url = f"/outputs/change_maps/diff_{filename}"
@@ -65,7 +65,7 @@ async def analyze_satellite(filename: str):
     return {
         "similarity_score": round(score, 4),
         "changes_detected": changes,
-        "diff_image_url": diff_url,
+        "diff_image_url":   diff_url,
     }
 
 
@@ -88,15 +88,14 @@ async def analyze_video(file: UploadFile = File(...)):
     out_path = "outputs/processed_tactical.mp4"
     writer   = imageio.get_writer(out_path, fps=fps, codec="libx264", macro_block_size=None)
 
-    total_frames   = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    max_risk_score = 0
-    final_level    = "NORMAL"
-    final_reasons  = []
-    final_counts   = {"people": 0, "vehicles": 0}
-    incident_log   = []
+    total_frames      = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    max_risk_score    = 0
+    final_level       = "NORMAL"
+    final_reasons     = []
+    final_counts      = {"people": 0, "vehicles": 0}
+    incident_log      = []
+    last_was_incident = False   # for distinct incident counting
 
-    # ── Frame skip: run inference every Nth frame, duplicate the rest ─────────
-    # Gives ~2x speedup on CPU with minimal accuracy loss
     FRAME_SKIP     = 2
     frame_idx      = 0
     last_annotated = None
@@ -106,8 +105,6 @@ async def analyze_video(file: UploadFile = File(...)):
         if not ret:
             break
         frame_idx += 1
-
-        # Smaller resolution = faster inference
         frame = cv2.resize(frame, (640, 360))
 
         if frame_idx % FRAME_SKIP == 0:
@@ -140,8 +137,13 @@ async def analyze_video(file: UploadFile = File(...)):
                 final_reasons  = reasons
                 final_counts   = class_counts
 
+            # Count distinct incidents — only when threat starts, not every frame
             if score >= 35:
-                incident_log.append({"frame": frame_idx, "score": score, "level": level})
+                if not last_was_incident:
+                    incident_log.append({"frame": frame_idx, "score": score, "level": level})
+                last_was_incident = True
+            else:
+                last_was_incident = False
 
             # HUD
             color = (0,200,0) if score < 35 else (0,165,255) if score < 60 else (0,0,255)
@@ -151,7 +153,6 @@ async def analyze_video(file: UploadFile = File(...)):
 
             last_annotated = annotated
         else:
-            # Reuse last processed frame to keep output video smooth
             annotated = last_annotated if last_annotated is not None else frame
 
         rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
@@ -164,12 +165,12 @@ async def analyze_video(file: UploadFile = File(...)):
     zone_log = loiter_engine.get_zone_log()
 
     return {
-        "risk_level":    final_level,
-        "risk_score":    max_risk_score,
-        "reasons":       final_reasons,
-        "class_counts":  final_counts,
+        "risk_level":     final_level,
+        "risk_score":     max_risk_score,
+        "reasons":        final_reasons,
+        "class_counts":   final_counts,
         "incident_count": len(incident_log),
-        "total_frames":  total_frames,
-        "video_url":     "/outputs/processed_tactical.mp4",
-        "zone_log":      zone_log,
+        "total_frames":   total_frames,
+        "video_url":      "/outputs/processed_tactical.mp4",
+        "zone_log":       zone_log,
     }

@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Video, Upload, Play, AlertTriangle, Users, Car, RefreshCw, ChevronRight, Download, Film, ShieldAlert, Clock, LogIn, LogOut } from 'lucide-react'
+import { useVideo } from '../context/VideoContext'
 import RiskGauge from '../components/RiskGauge'
 import { analyzeVideo } from '../api'
 
@@ -12,13 +13,15 @@ function levelColor(level) {
 }
 
 export default function VideoPage() {
-  const [file, setFile]           = useState(null)
-  const [dragging, setDragging]   = useState(false)
-  const [loading, setLoading]     = useState(false)
-  const [uploadPct, setUploadPct] = useState(0)
-  const [result, setResult]       = useState(null)
-  const [error, setError]         = useState(null)
+  const { file, setFile, result, setResult, loading, setLoading, uploadPct, setUploadPct, error, setError } = useVideo()
+  const [dragging, setDragging] = useState(false)
   const inputRef = useRef()
+
+  // Reset loading state on mount — prevents stuck progress bar after navigation
+  useEffect(() => {
+    setLoading(false)
+    setUploadPct(0)
+  }, [])
 
   function handleDrop(e) {
     e.preventDefault(); setDragging(false)
@@ -34,7 +37,7 @@ export default function VideoPage() {
     finally { setLoading(false) }
   }
 
-  const col = result ? levelColor(result.risk_level) : '#7eb8f7'
+  const col = result ? levelColor(result.risk_level) : '#D0BCFF'
 
   return (
     <div style={{ maxWidth: 1200, animation: 'fadeUp 0.3s ease both' }}>
@@ -46,8 +49,8 @@ export default function VideoPage() {
           background: 'rgba(126,184,247,0.1)', border: '1px solid rgba(126,184,247,0.2)',
           borderRadius: 100, padding: '4px 12px 4px 8px', marginBottom: 14,
         }}>
-          <Video size={13} color="#7eb8f7" />
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#7eb8f7' }}>Module 02</span>
+          <Video size={13} color="#D0BCFF" />
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#D0BCFF' }}>Module 02</span>
         </span>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#e2e8f3', marginBottom: 6 }}>Video Analytics</h1>
         <p style={{ fontSize: 14, color: '#8899b8' }}>Upload drone or CCTV feed for AI-powered detection, tracking and risk scoring.</p>
@@ -74,7 +77,7 @@ export default function VideoPage() {
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
           style={{
-            border: `2px dashed ${dragging ? '#7eb8f7' : 'rgba(147,196,255,0.15)'}`,
+            border: `2px dashed ${dragging ? '#D0BCFF' : 'rgba(147,196,255,0.15)'}`,
             borderRadius: 12, padding: '28px 20px', textAlign: 'center', cursor: 'pointer',
             background: dragging ? 'rgba(126,184,247,0.05)' : 'transparent',
             transition: 'all 0.15s ease',
@@ -83,14 +86,14 @@ export default function VideoPage() {
           <input ref={inputRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={e => { const f=e.target.files[0]; if(f){setFile(f);setResult(null);setError(null)} }} />
           {file ? (
             <>
-              <Film size={22} color="#7eb8f7" style={{ margin: '0 auto 10px' }} />
+              <Film size={22} color="#D0BCFF" style={{ margin: '0 auto 10px' }} />
               <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f3' }}>{file.name}</div>
               <div style={{ fontSize: 12, color: '#8899b8', marginTop: 4 }}>{(file.size/1e6).toFixed(1)} MB · Click to replace</div>
             </>
           ) : (
             <>
               <Upload size={22} color="#4a5568" style={{ margin: '0 auto 10px' }} />
-              <div style={{ fontSize: 13, color: '#8899b8' }}>Drop feed here or <span style={{ color: '#7eb8f7' }}>browse</span></div>
+              <div style={{ fontSize: 13, color: '#8899b8' }}>Drop feed here or <span style={{ color: '#D0BCFF' }}>browse</span></div>
               <div style={{ fontSize: 11, color: '#4a5568', marginTop: 4 }}>MP4 · AVI · MOV</div>
             </>
           )}
@@ -102,7 +105,7 @@ export default function VideoPage() {
             style={{
               marginTop: 12, width: '100%', display: 'flex', alignItems: 'center',
               justifyContent: 'center', gap: 8, padding: '11px', borderRadius: 12,
-              background: '#7eb8f7', color: '#003258', border: 'none',
+              background: '#D0BCFF', color: '#003258', border: 'none',
               fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
               transition: 'all 0.2s ease',
             }}
@@ -120,12 +123,12 @@ export default function VideoPage() {
                 <RefreshCw size={11} style={{ animation: 'spin 1s linear infinite' }} />
                 {uploadPct < 100 ? `Uploading… ${uploadPct}%` : 'Running YOLOv8 + ByteTrack…'}
               </span>
-              <span style={{ color: '#7eb8f7', fontWeight: 500 }}>{uploadPct < 100 ? 'UPLOAD' : 'INFERENCE'}</span>
+              <span style={{ color: '#D0BCFF', fontWeight: 500 }}>{uploadPct < 100 ? 'UPLOAD' : 'INFERENCE'}</span>
             </div>
             <div style={{ height: 4, background: 'rgba(126,184,247,0.08)', borderRadius: 100, overflow: 'hidden' }}>
               {uploadPct < 100
-                ? <div style={{ height: '100%', width: `${uploadPct}%`, background: '#7eb8f7', borderRadius: 100, transition: 'width 0.3s', boxShadow: '0 0 8px #7eb8f7' }} />
-                : <div style={{ height: '100%', width: '60%', background: '#7eb8f7', borderRadius: 100, animation: 'progressSlide 1.5s ease infinite', boxShadow: '0 0 8px #7eb8f7' }} />
+                ? <div style={{ height: '100%', width: `${uploadPct}%`, background: '#D0BCFF', borderRadius: 100, transition: 'width 0.3s', boxShadow: '0 0 8px #D0BCFF' }} />
+                : <div style={{ height: '100%', width: '60%', background: '#D0BCFF', borderRadius: 100, animation: 'progressSlide 1.5s ease infinite', boxShadow: '0 0 8px #D0BCFF' }} />
               }
             </div>
           </div>
@@ -145,7 +148,7 @@ export default function VideoPage() {
               {[
                 { label: 'People',    value: result.class_counts?.people ?? 0,   icon: <Users size={13}/>,  color: '#e2e8f3' },
                 { label: 'Vehicles',  value: result.class_counts?.vehicles ?? 0, icon: <Car size={13}/>,    color: '#e2e8f3' },
-                { label: 'Incidents', value: result.incident_count ?? 0,         icon: null,                color: result.incident_count > 0 ? '#fb923c' : '#4ade80' },
+                { label: 'Incidents', value: result.zone_log?.length ?? 0,       icon: null,                color: result.zone_log?.length > 0 ? '#fb923c' : '#4ade80' },
                 { label: 'Frames',    value: result.total_frames ?? '—',         icon: <Film size={13}/>,   color: '#e2e8f3' },
                 { label: 'Risk Score',value: `${result.risk_score}/100`,         icon: null,                color: col },
                 { label: 'Zone Entries', value: result.zone_log?.length ?? 0,    icon: <ShieldAlert size={13}/>, color: result.zone_log?.length > 0 ? '#f87171' : '#4ade80' },
@@ -205,7 +208,7 @@ export default function VideoPage() {
                     >
                       {/* ID */}
                       <span style={{
-                        fontSize: 13, fontWeight: 700, color: '#7eb8f7',
+                        fontSize: 13, fontWeight: 700, color: '#D0BCFF',
                         background: 'rgba(126,184,247,0.1)', borderRadius: 6,
                         padding: '2px 8px', textAlign: 'center', display: 'inline-block',
                       }}>#{entry.id}</span>
@@ -273,7 +276,7 @@ export default function VideoPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#8899b8', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Processed Feed</div>
               <a href={`${BASE}${result.video_url}`} download="processed_tactical.mp4"
-                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#7eb8f7', textDecoration: 'none', fontWeight: 500 }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#D0BCFF', textDecoration: 'none', fontWeight: 500 }}>
                 <Download size={13} /> Download
               </a>
             </div>
