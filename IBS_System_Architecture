@@ -1,0 +1,35 @@
+// IBS System Architecture
+digraph {
+	rankdir=LR size="10,8"
+	node [color=lightblue fontname=Helvetica shape=rectangle style=filled]
+	A [label="Surveillance Input
+(RGB Images / Video)"]
+	B [label="Satellite Input
+(Before & After Images)"]
+	C [label="Preprocessing
+(Resize, Normalize, Denoise)"]
+	D [label="Object Detection
+(YOLOv8)"]
+	E [label="Object Tracking
+(ByteTrack / DeepSORT)"]
+	F [label="Behavior Analysis
+(Loitering & Suspicious Activity)"]
+	G [label="Satellite Change Detection
+(SSIM + Pixel Difference + ORB)"]
+	H [label="Strategic Activity Monitor
+(Baseline + Time-Series Deviation)"]
+	I [label="Risk Scoring Engine
+(Weighted Fusion Model)"]
+	J [label="Alerts & Visualization
+(Low / Medium / High Risk)"]
+	A -> C
+	B -> C
+	C -> D
+	D -> E
+	E -> F
+	C -> G
+	F -> H
+	G -> H
+	H -> I
+	I -> J
+}

@@ -32,13 +32,17 @@ class SatelliteChangeDetector:
         kp2, des2 = self.orb.detectAndCompute(img2, None)
         if des1 is None or des2 is None:
             return img2
-        matcher      = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-        matches      = sorted(matcher.match(des1, des2), key=lambda x: x.distance)
+
+        matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        matches = sorted(matcher.match(des1, des2), key=lambda x: x.distance)
         good_matches = matches[:int(len(matches) * 0.2)]
+
         if len(good_matches) > 10:
             src_pts = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1,1,2)
             dst_pts = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1,1,2)
+
             matrix, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+
             if self.is_homography_valid(matrix, img1.shape):
                 h, w = img1.shape
                 return cv2.warpPerspective(img2, matrix, (w, h),
@@ -48,63 +52,79 @@ class SatelliteChangeDetector:
     def analyze(self, img1_path, img2_path):
         img1_color = cv2.imread(img1_path)
         img2_color = cv2.imread(img2_path)
+
         if img1_color is None or img2_color is None:
             return 1.0, 0
 
-        # 1. Grayscale + resize + align
+        # 1. Preprocess
         img1_gray  = cv2.cvtColor(img1_color, cv2.COLOR_BGR2GRAY)
         img2_gray  = cv2.cvtColor(img2_color, cv2.COLOR_BGR2GRAY)
+
         img2_gray  = cv2.resize(img2_gray,  (img1_gray.shape[1], img1_gray.shape[0]))
         img2_color = cv2.resize(img2_color, (img1_gray.shape[1], img1_gray.shape[0]))
+
         img2_aligned = self.align_images(img1_gray, img2_gray)
 
         # 2. Normalize
         norm1 = cv2.GaussianBlur(self.clahe.apply(img1_gray),    (7,7), 0)
         norm2 = cv2.GaussianBlur(self.clahe.apply(img2_aligned), (7,7), 0)
 
-        # 3. SSIM — coarse change map
+        # 3. SSIM difference
         score, diff = ssim(norm1, norm2, full=True)
-        diff        = (diff * 255).astype("uint8")
-        _, thresh   = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        diff = (diff * 255).astype("uint8")
 
-        # 4. Original morphological cleanup
-        kernel     = np.ones((5,5), np.uint8)
-        clean_mask = cv2.morphologyEx(thresh,     cv2.MORPH_OPEN,  kernel, iterations=1)
-        clean_mask = cv2.morphologyEx(clean_mask, cv2.MORPH_CLOSE, kernel, iterations=3)
+        # 🔥 4. Adaptive Threshold (Improved)
+        mean = np.mean(diff)
+        std  = np.std(diff)
+        k = 0.5
+        adaptive_thresh = mean - k * std
 
-        # 5. Edge detection on BOTH images
+        _, thresh = cv2.threshold(diff, adaptive_thresh, 255, cv2.THRESH_BINARY_INV)
+
+        # 🔥 5. Improved Morphology
+        kernel_small = np.ones((3,3), np.uint8)
+        kernel_large = np.ones((7,7), np.uint8)
+
+        clean_mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel_small, iterations=2)
+        clean_mask = cv2.morphologyEx(clean_mask, cv2.MORPH_CLOSE, kernel_large, iterations=2)
+
+        # 6. Edge detection
         edges1 = cv2.Canny(norm1, 40, 110)
         edges2 = cv2.Canny(norm2, 40, 110)
 
-        # Dilate slightly so near-miss edges still match up
         k3 = np.ones((3,3), np.uint8)
         e1d = cv2.dilate(edges1, k3, iterations=1)
         e2d = cv2.dilate(edges2, k3, iterations=1)
 
-        # New structures = edges in img2 not in img1
-        # Removed structures = edges in img1 not in img2
         new_edges     = cv2.subtract(e2d, e1d)
         removed_edges = cv2.subtract(e1d, e2d)
         changed_edges = cv2.bitwise_or(new_edges, removed_edges)
 
-        # Expand edge zones — TIGHT: 10px only so we don't bleed into neighbours
-        # This keeps road/building footprints without joining unrelated regions
-        edge_zone = cv2.dilate(changed_edges, np.ones((10,10), np.uint8), iterations=1)
+        # 🔥 Improved edge zone (less aggressive)
+        edge_zone = cv2.dilate(changed_edges, np.ones((7,7), np.uint8), iterations=1)
 
-        # 6. Refine: keep only SSIM-flagged areas that sit on edge-change zones
+        # 7. Refine
         refined = cv2.bitwise_and(clean_mask, edge_zone)
 
-        # Fallback: if refinement removes >90% of detections, use raw SSIM mask
         if cv2.countNonZero(refined) < cv2.countNonZero(clean_mask) * 0.10:
             refined = clean_mask
 
-        # 7. Final small close to fill gaps within a single structure
         refined = cv2.morphologyEx(refined, cv2.MORPH_CLOSE,
                                    np.ones((7,7), np.uint8), iterations=2)
 
-        # 8. Contours
-        contours, _ = cv2.findContours(refined, cv2.RETR_EXTERNAL,
-                                        cv2.CHAIN_APPROX_SIMPLE)
+        # 🔥 8. Contour Filtering (NEW)
+        contours, _ = cv2.findContours(refined, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        filtered_mask = np.zeros_like(refined)
+
+        for c in contours:
+            if cv2.contourArea(c) > 500:
+                cv2.drawContours(filtered_mask, [c], -1, 255, -1)
+
+        refined = filtered_mask
+
+        # 9. Visualization
+        contours, _ = cv2.findContours(refined, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         changes_found   = 0
         heatmap_overlay = img2_color.copy()
@@ -114,15 +134,16 @@ class SatelliteChangeDetector:
             if area > 400:
                 changes_found += 1
                 if area > 8000:
-                    color = (0, 0, 255)      # Red    — large
+                    color = (0, 0, 255)
                 elif area > 2000:
-                    color = (0, 100, 255)    # Orange — medium
+                    color = (0, 100, 255)
                 else:
-                    color = (0, 210, 255)    # Yellow — small
+                    color = (0, 210, 255)
+
                 cv2.drawContours(heatmap_overlay, [c], -1, color, cv2.FILLED)
                 cv2.drawContours(heatmap_overlay, [c], -1, (255,255,255), 1)
 
-        final_output = cv2.addWeighted(heatmap_overlay, 0.4, img2_color, 0.6, 0)
+        final_output = cv2.addWeighted(heatmap_overlay, 0.5, img2_color, 0.5, 0)
 
         if changes_found > 0:
             filename = os.path.basename(img1_path)
