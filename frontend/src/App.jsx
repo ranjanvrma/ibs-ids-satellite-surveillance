@@ -29,7 +29,7 @@ export default function App() {
               background:'var(--md-s3)', border:'1px solid var(--md-outline)',
               borderRadius:6, padding:'2px 8px',
               color:'var(--md-on-surface-var)',
-            }}>v1.2.0</span>
+            }}>v1.3.0</span>
           </div>
           <LiveClock />
         </header>
